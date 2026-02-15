@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>कॉन्ट्रॅक्टर प्रो - क्लाउड मॅनेजर</title>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // तुमची कॉन्फिगरेशन
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2sKZhBlgz19Ft0AVwB7mSUDMNSl4S5Ug",
+            authDomain: "manager-ac062.firebaseapp.com",
+            projectId: "manager-ac062",
+            storageBucket: "manager-ac062.firebasestorage.app",
+            messagingSenderId: "646058534721",
+            appId: "1:646058534721:web:2d17c9e83f529bde4523c0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ग्लोबल व्हेरिएबल्स
+        window.db = db;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #1e3a8a; --success: #16a34a; --danger: #dc2626; --warning: #f59e0b; --bg: #f3f4f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        
+        /* Tabs */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Cards & UI */
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-top: 4px solid var(--primary); }
+        
+        input, select { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 10px; box-sizing: border-box; }
+        button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; padding: 14px; width: 100%; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .nav-item { border: none; background: none; color: #6b7280; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px 8px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        .sync-status { font-size: 10px; text-align: center; color: var(--success); margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header">🏗️ कॉन्ट्रॅक्टर प्रो (Cloud)</div>
+
+<div class="container">
+    <div class="sync-status" id="syncStatus"><i class="fas fa-cloud"></i> डेटा क्लाउडवर सुरक्षित आहे</div>
+
+    <div id="tab-home" class="tab-content active">
+        <div class="dashboard">
+            <div class="stat-card">
+                <small>मालकाकडून येणे</small>
+                <b id="ownerTotal" style="color: var(--warning);">₹0</b>
+            </div>
+            <div class="stat-card" style="border-color: var(--success);">
+                <small>निव्वळ नफा</small>
+                <b id="myProfit" style="color: var(--success);">₹0</b>
+            </div>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-hand-holding-dollar"></i> लेबर येणेबाकी</h3>
+            <table id="labourTable">
+                <thead><tr><th>नाव</th><th>निव्वळ बाकी</th><th>Action</th></tr></thead>
+                <tbody id="labourBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-attendance" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-calendar-check"></i> हजेरी नोंदवा</h3>
+            <input type="date" id="attDate">
+            <select id="attSite"><option value="">-- साईट निवडा --</option></select>
+            <select id="attLabour"><option value="">-- लेबर निवडा --</option></select>
+            <input type="number" id="ownerRate" placeholder="मालकाचा रेट (उदा. 1100)">
+            <select id="attType">
+                <option value="1">पूर्ण दिवस</option>
+                <option value="0.5">अर्धा दिवस</option>
+            </select>
+            <button class="btn-success" onclick="addAttendance()">नोंदणी सेव्ह करा</button>
+        </div>
+    </div>
+
+    <div id="tab-reg" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-user-plus"></i> नवीन लेबर</h3>
+            <input type="text" id="labourName" placeholder="लेबर नाव">
+            <input type="number" id="labourWage" placeholder="मजुरी दर (उदा. 950)">
+            <button class="btn-main" onclick="addLabour()">लेबर जोडा</button>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-building"></i> नवीन साईट</h3>
+            <input type="text" id="siteName" placeholder="साईटनेम">
+            <button class="btn-main" onclick="addSite()">साईटनेम जोडा</button>
+        </div>
+    </div>
+
+    <div id="tab-reports" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-file-invoice"></i> शनिवार बिलिंग</h3>
+            <select id="reportSite"><option value="">-- साईट निवडा --</option></select>
+            <button class="btn-main" onclick="exportPDF()">PDF बिल काढा</button>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <button class="nav-item active" onclick="openTab('home', this)"><i class="fas fa-home"></i> होम</button>
+    <button class="nav-item" onclick="openTab('attendance', this)"><i class="fas fa-calendar-day"></i> हजेरी</button>
+    <button class="nav-item" onclick="openTab('reg', this)"><i class="fas fa-plus"></i> नोंदणी</button>
+    <button class="nav-item" onclick="openTab('reports', this)"><i class="fas fa-file-alt"></i> रिपोर्ट</button>
+</div>
+
+<script>
+    let appData = { sites: [], labours: [], attendance: [], advances: [] };
+
+    // क्लाउडवरून डेटा लोड करणे
+    async function loadCloudData() {
+        const docRef = window.doc(window.db, "users", "deepak_shengule"); // तुमचं युनिक नाव
+        const docSnap = await window.getDoc(docRef);
+        if (docSnap.exists()) {
+            appData = docSnap.data();
+            renderUI();
+        }
+    }
+
+    // क्लाउडवर डेटा सेव्ह करणे
+    async function syncToCloud() {
+        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-spinner fa-spin'></i> सिंक होत आहे...";
+        await window.setDoc(window.doc(window.db, "users", "deepak_shengule"), appData);
+        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-cloud'></i> डेटा क्लाउडवर सुरक्षित आहे";
+        renderUI();
+    }
+
+    function openTab(tabId, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        el.classList.add('active');
+    }
+
+    // Business Functions
+    function addSite() {
+        let n = document.getElementById('siteName').value;
+        if(n) { appData.sites.push({id: Date.now(), name: n}); syncToCloud(); document.getElementById('siteName').value=""; }
+    }
+
+    function addLabour() {
+        let n = document.getElementById('labourName').value;
+        let w = document.getElementById('labourWage').value;
+        if(n && w) { appData.labours.push({id: Date.now(), name: n, wage: parseFloat(w)}); syncToCloud(); }
+    }
+
+    function addAttendance() {
+        let lid = document.getElementById('attLabour').value;
+        let sid = document.getElementById('attSite').value;
+        let rate = document.getElementById('ownerRate').value;
+        if(!lid || !sid || !rate) return alert("माहिती भरा");
+        
+        let labour = appData.labours.find(l => l.id == lid);
+        let val = parseFloat(document.getElementById('attType').value);
+        
+        appData.attendance.push({
+            id: Date.now(), date: document.getElementById('attDate').value,
+            siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val, paid: false
+        });
+        syncToCloud(); alert("नोंदवली!");
+    }
+
+    function renderUI() {
+        // Dropdowns
+        let sOpt = '<option value="">-- निवडा --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+        document.getElementById('attSite').innerHTML = sOpt;
+        document.getElementById('reportSite').innerHTML = sOpt;
+        let lOpt = '<option value="">-- निवडा --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
+        document.getElementById('attLabour').innerHTML = lOpt;
+
+        // Stats & Table
+        let ownerDue = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + a.ownerRate, 0);
+        let profit = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + (a.ownerRate - a.labourRate), 0);
+        document.getElementById('ownerTotal').innerText = "₹" + ownerDue;
+        document.getElementById('myProfit').innerText = "₹" + profit;
+
+        let html = "";
+        appData.labours.forEach(l => {
+            let wage = appData.attendance.filter(a => a.labourId == l.id && !a.paid).reduce((s, a) => s + a.labourRate, 0);
+            if(wage > 0) html += `<tr><td>${l.name}</td><td>₹${wage}</td><td><button onclick="payLabour(${l.id})" style="padding:5px; background:var(--success); color:white; border-radius:5px;">Paid</button></td></tr>`;
+        });
+        document.getElementById('labourBody').innerHTML = html;
+    }
+
+    function payLabour(lid) {
+        appData.attendance.forEach(a => { if(a.labourId == lid) a.paid = true; });
+        syncToCloud();
+    }
+
+    // Page Load
+    setTimeout(loadCloudData, 2000); // Firebase लोड होण्यासाठी थोडा वेळ
+</script>
+
+</body>
+</html>
