@@ -35,58 +35,51 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
         .container { padding: 15px; max-width: 750px; margin: auto; }
-        
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-top: 4px solid var(--primary); }
-        
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 10px; box-sizing: border-box; }
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; padding: 12px; width: 100%; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
-        .btn-edit { background: var(--warning); color: white; padding: 5px 8px; width: auto; font-size: 11px; }
-        .btn-delete { background: var(--danger); color: white; padding: 5px 8px; width: auto; font-size: 11px; }
-        
+        .btn-warning { background: var(--warning); color: white; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
         .nav-item { border: none; background: none; color: #6b7280; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; width: auto; }
         .nav-item.active { color: var(--primary); }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { padding: 10px 5px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-        .sync-status { font-size: 10px; text-align: center; color: var(--success); margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-<div class="header">🏗️ Contractor Dashboard (Cloud)</div>
+<div class="header">🏗️ Contractor Pro Management</div>
 
 <div class="container">
-    <div class="sync-status" id="syncStatus"><i class="fas fa-cloud"></i> Data Secure on Cloud</div>
-
     <div id="tab-home" class="tab-content active">
         <div class="dashboard">
             <div class="stat-card">
-                <small>Receivable from Owner</small>
-                <b id="ownerTotal" style="color: var(--warning);">₹0</b>
+                <small>Pending from Owner</small>
+                <b id="ownerTotal" style="color: var(--danger);">₹0</b>
             </div>
             <div class="stat-card" style="border-color: var(--success);">
-                <small>Net Profit (Margin)</small>
+                <small>Total Profit</small>
                 <b id="myProfit" style="color: var(--success);">₹0</b>
             </div>
         </div>
+
+        <div class="card" style="border-left: 5px solid var(--warning);">
+            <h3><i class="fas fa-money-bill-wave"></i> Receive Payment from Owner</h3>
+            <select id="recvSite"><option value="">-- Select Site --</option></select>
+            <input type="number" id="recvAmount" placeholder="Amount Received (₹)">
+            <button class="btn-warning" onclick="receiveFromOwner()">Record Payment</button>
+        </div>
+
         <div class="card">
             <h3><i class="fas fa-users"></i> Labour Dues</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Labour</th>
-                        <th>Payable</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
+            <table id="labourTable">
+                <thead><tr><th>Name</th><th>Payable</th><th>Action</th></tr></thead>
                 <tbody id="labourBody"></tbody>
             </table>
         </div>
@@ -94,55 +87,24 @@
 
     <div id="tab-log" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-calendar-plus"></i> Add Entry</h3>
+            <h3><i class="fas fa-calendar-plus"></i> Work Entry</h3>
             <input type="date" id="attDate">
             <select id="attSite"><option value="">-- Select Site --</option></select>
             <select id="attLabour"><option value="">-- Select Labour --</option></select>
             <input type="number" id="ownerRate" placeholder="Owner Rate (e.g. 1100)">
-            <select id="attType">
-                <option value="1">Full Day (1.0)</option>
-                <option value="0.5">Half Day (0.5)</option>
-            </select>
-            <button class="btn-success" id="saveBtn" onclick="addAttendance()">Save Entry</button>
-        </div>
-
-        <div class="card">
-            <h3><i class="fas fa-history"></i> Recent Entries</h3>
-            <div style="overflow-x: auto;">
-                <table id="recentEntries">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Labour</th>
-                            <th>Owner Rate</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="entriesBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-reg" class="tab-content">
-        <div class="card">
-            <h3><i class="fas fa-user-plus"></i> Labour Reg</h3>
-            <input type="text" id="labourName" placeholder="Labour Name">
-            <input type="number" id="labourWage" placeholder="Labour Wage (e.g. 950)">
-            <button class="btn-main" onclick="addLabour()">Add Labour</button>
-        </div>
-        <div class="card">
-            <h3><i class="fas fa-building"></i> Site Reg</h3>
-            <input type="text" id="siteName" placeholder="Site Name">
-            <button class="btn-main" onclick="addSite()">Add Site</button>
+            <button class="btn-success" onclick="addAttendance()">Save Entry</button>
         </div>
     </div>
 
     <div id="tab-reports" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-file-invoice"></i> Saturday Settlement</h3>
-            <select id="reportSite"><option value="">-- Select Site for Bill --</option></select>
-            <button class="btn-main" onclick="exportPDF()">Download PDF Bill</button>
+            <h3><i class="fas fa-file-invoice"></i> Generate Report</h3>
+            <select id="reportSite"><option value="">-- Select Site --</option></select>
+            <div style="display: flex; gap: 10px;">
+                <input type="date" id="startDate" title="Start Date">
+                <input type="date" id="endDate" title="End Date">
+            </div>
+            <button class="btn-main" onclick="exportPDF()">Download PDF Report</button>
         </div>
     </div>
 </div>
@@ -150,46 +112,30 @@
 <div class="nav-bar">
     <button class="nav-item active" onclick="openTab('home', this)"><i class="fas fa-home"></i> Home</button>
     <button class="nav-item" onclick="openTab('log', this)"><i class="fas fa-calendar-day"></i> Log</button>
-    <button class="nav-item" onclick="openTab('reg', this)"><i class="fas fa-plus"></i> Reg</button>
     <button class="nav-item" onclick="openTab('reports', this)"><i class="fas fa-file-alt"></i> Report</button>
 </div>
 
 <script>
-    let appData = { sites: [], labours: [], attendance: [] };
-    let editId = null;
+    let appData = { sites: [], labours: [], attendance: [], ownerPayments: [] };
 
-    async function loadCloudData() {
-        const docRef = window.doc(window.db, "users", "deepak_shengule");
-        const docSnap = await window.getDoc(docRef);
-        if (docSnap.exists()) {
-            appData = docSnap.data();
-            renderUI();
-        }
+    async function loadData() {
+        const snap = await window.getDoc(window.doc(window.db, "users", "deepak_shengule"));
+        if (snap.exists()) { appData = snap.data(); renderUI(); }
     }
 
-    async function syncToCloud() {
-        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-spinner fa-spin'></i> Syncing...";
+    async function sync() {
         await window.setDoc(window.doc(window.db, "users", "deepak_shengule"), appData);
-        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-cloud'></i> Data Secure on Cloud";
         renderUI();
     }
 
-    function openTab(tabId, el) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('tab-' + tabId).classList.add('active');
-        el.classList.add('active');
-    }
-
-    function addSite() {
-        let n = document.getElementById('siteName').value;
-        if(n) { appData.sites.push({id: Date.now(), name: n}); syncToCloud(); document.getElementById('siteName').value=""; }
-    }
-
-    function addLabour() {
-        let n = document.getElementById('labourName').value;
-        let w = document.getElementById('labourWage').value;
-        if(n && w) { appData.labours.push({id: Date.now(), name: n, wage: parseFloat(w)}); syncToCloud(); document.getElementById('labourName').value=""; document.getElementById('labourWage').value=""; }
+    function receiveFromOwner() {
+        let sid = document.getElementById('recvSite').value;
+        let amt = parseFloat(document.getElementById('recvAmount').value);
+        if(!sid || !amt) return alert("Select site and amount");
+        if(!appData.ownerPayments) appData.ownerPayments = [];
+        appData.ownerPayments.push({ siteId: sid, amount: amt, date: new Date().toISOString().split('T')[0] });
+        document.getElementById('recvAmount').value = "";
+        sync(); alert("Payment recorded!");
     }
 
     function addAttendance() {
@@ -197,125 +143,53 @@
         let sid = document.getElementById('attSite').value;
         let lid = document.getElementById('attLabour').value;
         let rate = parseFloat(document.getElementById('ownerRate').value);
-        let val = parseFloat(document.getElementById('attType').value);
-
-        if(!date || !sid || !lid || !rate) return alert("Fill all fields");
-
         let labour = appData.labours.find(l => l.id == lid);
-        
-        if(editId) {
-            let index = appData.attendance.findIndex(a => a.id == editId);
-            appData.attendance[index] = { ...appData.attendance[index], date, siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val };
-            editId = null;
-            document.getElementById('saveBtn').innerText = "Save Entry";
-        } else {
-            appData.attendance.push({ id: Date.now(), date, siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val, paid: false });
-        }
-        
-        syncToCloud();
-        alert("Success!");
-    }
-
-    function deleteEntry(id) {
-        if(confirm("Delete this entry?")) {
-            appData.attendance = appData.attendance.filter(a => a.id != id);
-            syncToCloud();
-        }
-    }
-
-    function editEntry(id) {
-        let entry = appData.attendance.find(a => a.id == id);
-        document.getElementById('attDate').value = entry.date;
-        document.getElementById('attSite').value = entry.siteId;
-        document.getElementById('attLabour').value = entry.labourId;
-        document.getElementById('ownerRate').value = entry.ownerRate / (entry.ownerRate / (entry.ownerRate || 1)); // Simplified
-        editId = id;
-        document.getElementById('saveBtn').innerText = "Update Entry";
-        openTab('log', document.querySelectorAll('.nav-item')[1]);
+        appData.attendance.push({ id: Date.now(), date, siteId: sid, labourId: lid, ownerRate: rate, labourRate: labour.wage, paid: false });
+        sync();
     }
 
     function renderUI() {
-        // Site & Labour Dropdowns
         let sOpt = '<option value="">-- Select --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
         document.getElementById('attSite').innerHTML = sOpt;
         document.getElementById('reportSite').innerHTML = sOpt;
-        let lOpt = '<option value="">-- Select --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
-        document.getElementById('attLabour').innerHTML = lOpt;
+        document.getElementById('recvSite').innerHTML = sOpt;
 
-        // Dashboard
-        let ownerDue = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + a.ownerRate, 0);
-        let profit = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + (a.ownerRate - a.labourRate), 0);
-        document.getElementById('ownerTotal').innerText = "₹" + ownerDue;
+        let totalOwnerDue = appData.attendance.reduce((s, a) => s + a.ownerRate, 0);
+        let totalReceived = (appData.ownerPayments || []).reduce((s, p) => s + p.amount, 0);
+        document.getElementById('ownerTotal').innerText = "₹" + (totalOwnerDue - totalReceived);
+        
+        let profit = appData.attendance.reduce((s, a) => s + (a.ownerRate - a.labourRate), 0);
         document.getElementById('myProfit').innerText = "₹" + profit;
-
-        // Labour Dues Table
-        let html = "";
-        appData.labours.forEach(l => {
-            let wage = appData.attendance.filter(a => a.labourId == l.id && !a.paid).reduce((s, a) => s + a.labourRate, 0);
-            if(wage > 0) html += `<tr><td>${l.name}</td><td>₹${wage}</td><td><button class="btn-edit" onclick="payLabour(${l.id})">Paid</button></td></tr>`;
-        });
-        document.getElementById('labourBody').innerHTML = html;
-
-        // Recent Entries Table
-        let entriesHtml = "";
-        appData.attendance.slice().reverse().slice(0, 10).forEach(a => {
-            let l = appData.labours.find(lab => lab.id == a.labourId);
-            entriesHtml += `<tr>
-                <td>${a.date}</td>
-                <td>${l ? l.name : 'Unknown'}</td>
-                <td>₹${a.ownerRate}</td>
-                <td>
-                    <button class="btn-edit" onclick="editEntry(${a.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn-delete" onclick="deleteEntry(${a.id})"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>`;
-        });
-        document.getElementById('entriesBody').innerHTML = entriesHtml;
-    }
-
-    function payLabour(lid) {
-        if(confirm("Clear all dues for this labour?")) {
-            appData.attendance.forEach(a => { if(a.labourId == lid) a.paid = true; });
-            syncToCloud();
-        }
     }
 
     function exportPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         let sid = document.getElementById('reportSite').value;
+        let start = document.getElementById('startDate').value;
+        let end = document.getElementById('endDate').value;
         let site = appData.sites.find(s => s.id == sid);
-        if(!site) return alert("Select Site");
 
-        doc.setFontSize(18);
-        doc.text("Bill Summary: " + site.name, 15, 20);
+        doc.text("Report: " + site.name, 15, 20);
+        let y = 40;
+        let filtered = appData.attendance.filter(a => a.siteId == sid && (!start || a.date >= start) && (!end || a.date <= end));
         
-        doc.setFontSize(10);
-        let y = 35;
-        doc.text("Date", 15, y);
-        doc.text("Labour Name", 50, y);
-        doc.text("Owner Rate", 120, y);
-        doc.line(15, y+2, 195, y+2);
-        y += 10;
-
-        let total = 0;
-        appData.attendance.filter(a => a.siteId == sid).forEach(a => {
+        filtered.forEach(a => {
             let l = appData.labours.find(lab => lab.id == a.labourId);
-            doc.text(a.date, 15, y);
-            doc.text(l ? l.name : 'N/A', 50, y);
-            doc.text("Rs. " + a.ownerRate, 120, y);
-            total += a.ownerRate;
-            y += 8;
+            doc.text(`${a.date} | ${l.name} | Rs. ${a.ownerRate}`, 15, y);
+            y += 10;
         });
-
-        doc.setFontSize(14);
-        doc.text("Grand Total Receivable: Rs. " + total, 15, y + 10);
-        doc.save(site.name + "_Bill.pdf");
+        doc.save("Report.pdf");
     }
 
-    document.getElementById('attDate').valueAsDate = new Date();
-    setTimeout(loadCloudData, 1500);
-</script>
+    function openTab(id, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
 
+    setTimeout(loadData, 1500);
+</script>
 </body>
 </html>
