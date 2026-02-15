@@ -34,47 +34,42 @@
     <style>
         :root { --primary: #1e3a8a; --success: #16a34a; --danger: #dc2626; --warning: #f59e0b; --bg: #f3f4f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        
+        /* Floating Tiranga */
+        .tiranga { position: fixed; top: 5px; right: 10px; z-index: 2000; font-size: 20px; animation: wave 2s linear infinite; }
+        @keyframes wave { 0% { transform: rotate(0deg); } 50% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
+
         .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
         .container { padding: 15px; max-width: 750px; margin: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-top: 4px solid var(--primary); }
+        
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 10px; box-sizing: border-box; }
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; padding: 12px; width: 100%; transition: 0.2s; }
-        .btn-main { background: var(--primary); color: white; }
+        .btn-main { background: var(--primary); color: white; margin-top: 5px; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; padding: 5px; width: auto; font-size: 12px; }
         .btn-warning { background: var(--warning); color: white; padding: 5px; width: auto; font-size: 12px; }
+        
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
         .nav-item { border: none; background: none; color: #6b7280; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; width: auto; }
         .nav-item.active { color: var(--primary); }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { padding: 10px 5px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-        .site-label { font-size: 10px; color: #6b7280; font-style: italic; }
     </style>
 </head>
 <body>
 
+<div class="tiranga">🇮🇳</div>
 <div class="header">🏗️ Contractor Pro Dashboard</div>
 
 <div class="container">
     <div id="tab-home" class="tab-content active">
-        <div class="dashboard">
-            <div class="stat-card">
-                <small>Pending from Owner</small>
-                <b id="ownerTotal" style="color: var(--danger);">₹0</b>
-            </div>
-            <div class="stat-card" style="border-color: var(--success);">
-                <small>Total Profit</small>
-                <b id="myProfit" style="color: var(--success);">₹0</b>
-            </div>
-        </div>
-
         <div class="card">
-            <h3><i class="fas fa-users"></i> Labour Dues</h3>
-            <table>
+            <h3><i class="fas fa-users"></i> Active Labour Dues</h3>
+            <table id="labourTable">
                 <thead><tr><th>Labour Details</th><th>Amount</th><th>Action</th></tr></thead>
                 <tbody id="labourBody"></tbody>
             </table>
@@ -90,23 +85,27 @@
             <input type="number" id="ownerRate" placeholder="Owner Rate (e.g. 1100)">
             <button class="btn-success" id="saveBtn" onclick="addAttendance()">Save Entry</button>
         </div>
-
         <div class="card">
-            <h3><i class="fas fa-history"></i> Logs (Dbl-Click to Delete)</h3>
-            <table id="recentLogs">
-                <thead><tr><th>Date/Site</th><th>Labour</th><th>Amt</th><th>Action</th></tr></thead>
-                <tbody id="logBody"></tbody>
-            </table>
+            <h3><i class="fas fa-history"></i> Recent Logs</h3>
+            <tbody id="logBody"></tbody>
         </div>
     </div>
 
     <div id="tab-reg" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-user-plus"></i> Master Entry</h3>
-            <input type="text" id="labourName" placeholder="Labour Name">
-            <input type="number" id="labourWage" placeholder="Labour Wage (950)">
+            <h3><i class="fas fa-user-plus"></i> Add Labour</h3>
+            <input type="text" id="labourName" placeholder="Name">
+            <input type="number" id="labourWage" placeholder="Wage">
             <button class="btn-main" onclick="addLabour()">Add Labour</button>
-            <hr>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-list"></i> Manage Labour/Sites</h3>
+            <table id="masterList">
+                <tbody id="masterBody"></tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-building"></i> Add Site</h3>
             <input type="text" id="siteName" placeholder="Site Name">
             <button class="btn-main" onclick="addSite()">Add Site</button>
         </div>
@@ -114,13 +113,9 @@
 
     <div id="tab-reports" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-file-invoice"></i> Site Billing Report</h3>
+            <h3><i class="fas fa-file-invoice"></i> Generate Bill</h3>
             <select id="reportSite"><option value="">-- Select Site --</option></select>
-            <div style="display: flex; gap: 10px;">
-                <input type="date" id="startDate">
-                <input type="date" id="endDate">
-            </div>
-            <button class="btn-main" onclick="exportPDF()">Generate Table Report</button>
+            <button class="btn-main" onclick="exportPDF()">Download PDF</button>
         </div>
     </div>
 </div>
@@ -143,6 +138,7 @@
 
     async function sync() {
         await window.setDoc(window.doc(window.db, "users", "deepak_shengule"), appData);
+        alert("Saved Successfully!");
         renderUI();
     }
 
@@ -151,107 +147,56 @@
         let sid = document.getElementById('attSite').value;
         let lid = document.getElementById('attLabour').value;
         let rate = parseFloat(document.getElementById('ownerRate').value);
-        if(!sid || !lid || !rate) return alert("Missing Info");
         
+        // --- ❌ Validation: One Labour, One Day, One Site Only ---
+        let duplicate = appData.attendance.find(a => a.date === date && a.labourId === lid && a.id !== editId);
+        if(duplicate) return alert("❌ Error: This labour is already assigned to a site on this date!");
+
         let labour = appData.labours.find(l => l.id == lid);
-        
         if(editId) {
             let idx = appData.attendance.findIndex(a => a.id == editId);
             appData.attendance[idx] = { ...appData.attendance[idx], date, siteId: sid, labourId: lid, ownerRate: rate };
             editId = null;
-            document.getElementById('saveBtn').innerText = "Save Entry";
         } else {
             appData.attendance.push({ id: Date.now(), date, siteId: sid, labourId: lid, ownerRate: rate, labourRate: labour.wage, paid: false });
         }
         sync();
     }
 
-    function editEntry(id) {
-        let entry = appData.attendance.find(a => a.id == id);
-        document.getElementById('attDate').value = entry.date;
-        document.getElementById('attSite').value = entry.siteId;
-        document.getElementById('attLabour').value = entry.labourId;
-        document.getElementById('ownerRate').value = entry.ownerRate;
-        editId = id;
-        document.getElementById('saveBtn').innerText = "Update Entry";
-        openTab('log', document.querySelectorAll('.nav-item')[1]);
-    }
-
-    function deleteLog(id) {
-        appData.attendance = appData.attendance.filter(a => a.id != id);
-        sync();
-    }
-
-    function renderUI() {
-        let sOpt = '<option value="">-- Select --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
-        document.getElementById('attSite').innerHTML = sOpt;
-        document.getElementById('reportSite').innerHTML = sOpt;
-        let lOpt = '<option value="">-- Select --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
-        document.getElementById('attLabour').innerHTML = lOpt;
-
-        let totalOwner = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + a.ownerRate, 0);
-        let totalProfit = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + (a.ownerRate - a.labourRate), 0);
-        document.getElementById('ownerTotal').innerText = "₹" + totalOwner;
-        document.getElementById('myProfit').innerText = "₹" + totalProfit;
-
-        let homeHtml = "";
-        appData.labours.forEach(l => {
-            let dues = appData.attendance.filter(a => a.labourId == l.id && !a.paid);
-            let wage = dues.reduce((s, a) => s + a.labourRate, 0);
-            if(wage > 0) {
-                let sNames = [...new Set(dues.map(d => appData.sites.find(s=>s.id==d.siteId)?.name))].join(", ");
-                homeHtml += `<tr><td><b>${l.name}</b><br><span class="site-label">${sNames}</span></td><td>₹${wage}</td>
-                <td><button onclick="payLabour(${l.id})" class="btn-success">Paid</button></td></tr>`;
-            }
-        });
-        document.getElementById('labourBody').innerHTML = homeHtml;
-
-        let logHtml = "";
-        appData.attendance.slice().reverse().slice(0,10).forEach(a => {
-            let l = appData.labours.find(lab => lab.id == a.labourId);
-            let s = appData.sites.find(si => si.id == a.siteId);
-            logHtml += `<tr><td>${a.date}<br><span class="site-label">${s?.name}</span></td><td>${l?.name}</td><td>₹${a.ownerRate}</td>
-            <td><button class="btn-warning" onclick="editEntry(${a.id})"><i class="fas fa-edit"></i></button>
-            <button class="btn-danger" ondblclick="deleteLog(${a.id})"><i class="fas fa-trash"></i></button></td></tr>`;
-        });
-        document.getElementById('logBody').innerHTML = logHtml;
-    }
-
-    function payLabour(lid) {
-        if(confirm("Confirm Payment?")) {
-            appData.attendance.forEach(a => { if(a.labourId == lid) a.paid = true; });
+    // Master Manage Functions
+    function deleteMaster(type, id) {
+        if(confirm("❗ Double Confirm: Are you sure you want to delete this?")) {
+            if(type === 'labour') appData.labours = appData.labours.filter(l => l.id != id);
+            else appData.sites = appData.sites.filter(s => s.id != id);
             sync();
         }
     }
 
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let sid = document.getElementById('reportSite').value;
-        let start = document.getElementById('startDate').value;
-        let end = document.getElementById('endDate').value;
-        let site = appData.sites.find(s => s.id == sid);
-        
-        if(!site) return alert("Select Site");
+    function renderUI() {
+        // Dropdowns
+        let sOpt = '<option value="">-- Select Site --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+        document.getElementById('attSite').innerHTML = sOpt;
+        document.getElementById('reportSite').innerHTML = sOpt;
+        let lOpt = '<option value="">-- Select Labour --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
+        document.getElementById('attLabour').innerHTML = lOpt;
 
-        doc.setFontSize(18);
-        doc.text("Billing Report: " + site.name, 15, 20);
-        
-        let filtered = appData.attendance.filter(a => a.siteId == sid && (!start || a.date >= start) && (!end || a.date <= end));
-        let tableData = filtered.map(a => [
-            a.date,
-            appData.labours.find(l=>l.id == a.labourId)?.name,
-            "Rs. " + a.ownerRate
-        ]);
-
-        doc.autoTable({
-            startY: 30,
-            head: [['Date', 'Labour Name', 'Owner Rate']],
-            body: tableData,
-            foot: [['', 'Total Receivable:', 'Rs. ' + filtered.reduce((s,a)=>s+a.ownerRate,0)]]
+        // Master List HTML
+        let masterHtml = "";
+        appData.labours.forEach(l => {
+            masterHtml += `<tr><td>👷 ${l.name} (Rs.${l.wage})</td><td><button class="btn-danger" onclick="deleteMaster('labour', ${l.id})">Del</button></td></tr>`;
         });
+        appData.sites.forEach(s => {
+            masterHtml += `<tr><td>📍 Site: ${s.name}</td><td><button class="btn-danger" onclick="deleteMaster('site', ${s.id})">Del</button></td></tr>`;
+        });
+        document.getElementById('masterBody').innerHTML = masterHtml;
 
-        doc.save(site.name + "_Bill.pdf");
+        // Active Dues HTML
+        let homeHtml = "";
+        appData.labours.forEach(l => {
+            let wage = appData.attendance.filter(a => a.labourId == l.id && !a.paid).reduce((s, a) => s + a.labourRate, 0);
+            if(wage > 0) homeHtml += `<tr><td>${l.name}</td><td>₹${wage}</td><td><button onclick="payLabour(${l.id})" class="btn-success">Paid</button></td></tr>`;
+        });
+        document.getElementById('labourBody').innerHTML = homeHtml;
     }
 
     function openTab(id, el) {
