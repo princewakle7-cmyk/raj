@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>कॉन्ट्रॅक्टर प्रो - क्लाउड मॅनेजर</title>
+    <title>Contractor Pro - Cloud Manager</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // तुमची कॉन्फिगरेशन
         const firebaseConfig = {
             apiKey: "AIzaSyB2sKZhBlgz19Ft0AVwB7mSUDMNSl4S5Ug",
             authDomain: "manager-ac062.firebaseapp.com",
@@ -22,7 +21,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ग्लोबल व्हेरिएबल्स
         window.db = db;
         window.doc = doc;
         window.setDoc = setDoc;
@@ -36,109 +34,132 @@
         :root { --primary: #1e3a8a; --success: #16a34a; --danger: #dc2626; --warning: #f59e0b; --bg: #f3f4f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .container { padding: 15px; max-width: 750px; margin: auto; }
         
-        /* Tabs */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Cards & UI */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-top: 4px solid var(--primary); }
         
-        input, select { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 10px; box-sizing: border-box; }
-        button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; padding: 14px; width: 100%; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 10px; box-sizing: border-box; }
+        button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; padding: 12px; width: 100%; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
+        .btn-edit { background: var(--warning); color: white; padding: 5px 8px; width: auto; font-size: 11px; }
+        .btn-delete { background: var(--danger); color: white; padding: 5px 8px; width: auto; font-size: 11px; }
         
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-        .nav-item { border: none; background: none; color: #6b7280; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .nav-item { border: none; background: none; color: #6b7280; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; width: auto; }
         .nav-item.active { color: var(--primary); }
         
-        table { width: 100%; border-collapse: collapse; }
-        td, th { padding: 12px 8px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { padding: 10px 5px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
         .sync-status { font-size: 10px; text-align: center; color: var(--success); margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-<div class="header">🏗️ कॉन्ट्रॅक्टर प्रो (Cloud)</div>
+<div class="header">🏗️ Contractor Dashboard (Cloud)</div>
 
 <div class="container">
-    <div class="sync-status" id="syncStatus"><i class="fas fa-cloud"></i> डेटा क्लाउडवर सुरक्षित आहे</div>
+    <div class="sync-status" id="syncStatus"><i class="fas fa-cloud"></i> Data Secure on Cloud</div>
 
     <div id="tab-home" class="tab-content active">
         <div class="dashboard">
             <div class="stat-card">
-                <small>मालकाकडून येणे</small>
+                <small>Receivable from Owner</small>
                 <b id="ownerTotal" style="color: var(--warning);">₹0</b>
             </div>
             <div class="stat-card" style="border-color: var(--success);">
-                <small>निव्वळ नफा</small>
+                <small>Net Profit (Margin)</small>
                 <b id="myProfit" style="color: var(--success);">₹0</b>
             </div>
         </div>
         <div class="card">
-            <h3><i class="fas fa-hand-holding-dollar"></i> लेबर येणेबाकी</h3>
-            <table id="labourTable">
-                <thead><tr><th>नाव</th><th>निव्वळ बाकी</th><th>Action</th></tr></thead>
+            <h3><i class="fas fa-users"></i> Labour Dues</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Labour</th>
+                        <th>Payable</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
                 <tbody id="labourBody"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="tab-attendance" class="tab-content">
+    <div id="tab-log" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-calendar-check"></i> हजेरी नोंदवा</h3>
+            <h3><i class="fas fa-calendar-plus"></i> Add Entry</h3>
             <input type="date" id="attDate">
-            <select id="attSite"><option value="">-- साईट निवडा --</option></select>
-            <select id="attLabour"><option value="">-- लेबर निवडा --</option></select>
-            <input type="number" id="ownerRate" placeholder="मालकाचा रेट (उदा. 1100)">
+            <select id="attSite"><option value="">-- Select Site --</option></select>
+            <select id="attLabour"><option value="">-- Select Labour --</option></select>
+            <input type="number" id="ownerRate" placeholder="Owner Rate (e.g. 1100)">
             <select id="attType">
-                <option value="1">पूर्ण दिवस</option>
-                <option value="0.5">अर्धा दिवस</option>
+                <option value="1">Full Day (1.0)</option>
+                <option value="0.5">Half Day (0.5)</option>
             </select>
-            <button class="btn-success" onclick="addAttendance()">नोंदणी सेव्ह करा</button>
+            <button class="btn-success" id="saveBtn" onclick="addAttendance()">Save Entry</button>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-history"></i> Recent Entries</h3>
+            <div style="overflow-x: auto;">
+                <table id="recentEntries">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Labour</th>
+                            <th>Owner Rate</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entriesBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div id="tab-reg" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-user-plus"></i> नवीन लेबर</h3>
-            <input type="text" id="labourName" placeholder="लेबर नाव">
-            <input type="number" id="labourWage" placeholder="मजुरी दर (उदा. 950)">
-            <button class="btn-main" onclick="addLabour()">लेबर जोडा</button>
+            <h3><i class="fas fa-user-plus"></i> Labour Reg</h3>
+            <input type="text" id="labourName" placeholder="Labour Name">
+            <input type="number" id="labourWage" placeholder="Labour Wage (e.g. 950)">
+            <button class="btn-main" onclick="addLabour()">Add Labour</button>
         </div>
         <div class="card">
-            <h3><i class="fas fa-building"></i> नवीन साईट</h3>
-            <input type="text" id="siteName" placeholder="साईटनेम">
-            <button class="btn-main" onclick="addSite()">साईटनेम जोडा</button>
+            <h3><i class="fas fa-building"></i> Site Reg</h3>
+            <input type="text" id="siteName" placeholder="Site Name">
+            <button class="btn-main" onclick="addSite()">Add Site</button>
         </div>
     </div>
 
     <div id="tab-reports" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-file-invoice"></i> शनिवार बिलिंग</h3>
-            <select id="reportSite"><option value="">-- साईट निवडा --</option></select>
-            <button class="btn-main" onclick="exportPDF()">PDF बिल काढा</button>
+            <h3><i class="fas fa-file-invoice"></i> Saturday Settlement</h3>
+            <select id="reportSite"><option value="">-- Select Site for Bill --</option></select>
+            <button class="btn-main" onclick="exportPDF()">Download PDF Bill</button>
         </div>
     </div>
 </div>
 
 <div class="nav-bar">
-    <button class="nav-item active" onclick="openTab('home', this)"><i class="fas fa-home"></i> होम</button>
-    <button class="nav-item" onclick="openTab('attendance', this)"><i class="fas fa-calendar-day"></i> हजेरी</button>
-    <button class="nav-item" onclick="openTab('reg', this)"><i class="fas fa-plus"></i> नोंदणी</button>
-    <button class="nav-item" onclick="openTab('reports', this)"><i class="fas fa-file-alt"></i> रिपोर्ट</button>
+    <button class="nav-item active" onclick="openTab('home', this)"><i class="fas fa-home"></i> Home</button>
+    <button class="nav-item" onclick="openTab('log', this)"><i class="fas fa-calendar-day"></i> Log</button>
+    <button class="nav-item" onclick="openTab('reg', this)"><i class="fas fa-plus"></i> Reg</button>
+    <button class="nav-item" onclick="openTab('reports', this)"><i class="fas fa-file-alt"></i> Report</button>
 </div>
 
 <script>
-    let appData = { sites: [], labours: [], attendance: [], advances: [] };
+    let appData = { sites: [], labours: [], attendance: [] };
+    let editId = null;
 
-    // क्लाउडवरून डेटा लोड करणे
     async function loadCloudData() {
-        const docRef = window.doc(window.db, "users", "deepak_shengule"); // तुमचं युनिक नाव
+        const docRef = window.doc(window.db, "users", "deepak_shengule");
         const docSnap = await window.getDoc(docRef);
         if (docSnap.exists()) {
             appData = docSnap.data();
@@ -146,11 +167,10 @@
         }
     }
 
-    // क्लाउडवर डेटा सेव्ह करणे
     async function syncToCloud() {
-        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-spinner fa-spin'></i> सिंक होत आहे...";
+        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-spinner fa-spin'></i> Syncing...";
         await window.setDoc(window.doc(window.db, "users", "deepak_shengule"), appData);
-        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-cloud'></i> डेटा क्लाउडवर सुरक्षित आहे";
+        document.getElementById('syncStatus').innerHTML = "<i class='fas fa-cloud'></i> Data Secure on Cloud";
         renderUI();
     }
 
@@ -161,7 +181,6 @@
         el.classList.add('active');
     }
 
-    // Business Functions
     function addSite() {
         let n = document.getElementById('siteName').value;
         if(n) { appData.sites.push({id: Date.now(), name: n}); syncToCloud(); document.getElementById('siteName').value=""; }
@@ -170,54 +189,132 @@
     function addLabour() {
         let n = document.getElementById('labourName').value;
         let w = document.getElementById('labourWage').value;
-        if(n && w) { appData.labours.push({id: Date.now(), name: n, wage: parseFloat(w)}); syncToCloud(); }
+        if(n && w) { appData.labours.push({id: Date.now(), name: n, wage: parseFloat(w)}); syncToCloud(); document.getElementById('labourName').value=""; document.getElementById('labourWage').value=""; }
     }
 
     function addAttendance() {
-        let lid = document.getElementById('attLabour').value;
+        let date = document.getElementById('attDate').value;
         let sid = document.getElementById('attSite').value;
-        let rate = document.getElementById('ownerRate').value;
-        if(!lid || !sid || !rate) return alert("माहिती भरा");
-        
-        let labour = appData.labours.find(l => l.id == lid);
+        let lid = document.getElementById('attLabour').value;
+        let rate = parseFloat(document.getElementById('ownerRate').value);
         let val = parseFloat(document.getElementById('attType').value);
+
+        if(!date || !sid || !lid || !rate) return alert("Fill all fields");
+
+        let labour = appData.labours.find(l => l.id == lid);
         
-        appData.attendance.push({
-            id: Date.now(), date: document.getElementById('attDate').value,
-            siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val, paid: false
-        });
-        syncToCloud(); alert("नोंदवली!");
+        if(editId) {
+            let index = appData.attendance.findIndex(a => a.id == editId);
+            appData.attendance[index] = { ...appData.attendance[index], date, siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val };
+            editId = null;
+            document.getElementById('saveBtn').innerText = "Save Entry";
+        } else {
+            appData.attendance.push({ id: Date.now(), date, siteId: sid, labourId: lid, ownerRate: rate * val, labourRate: labour.wage * val, paid: false });
+        }
+        
+        syncToCloud();
+        alert("Success!");
+    }
+
+    function deleteEntry(id) {
+        if(confirm("Delete this entry?")) {
+            appData.attendance = appData.attendance.filter(a => a.id != id);
+            syncToCloud();
+        }
+    }
+
+    function editEntry(id) {
+        let entry = appData.attendance.find(a => a.id == id);
+        document.getElementById('attDate').value = entry.date;
+        document.getElementById('attSite').value = entry.siteId;
+        document.getElementById('attLabour').value = entry.labourId;
+        document.getElementById('ownerRate').value = entry.ownerRate / (entry.ownerRate / (entry.ownerRate || 1)); // Simplified
+        editId = id;
+        document.getElementById('saveBtn').innerText = "Update Entry";
+        openTab('log', document.querySelectorAll('.nav-item')[1]);
     }
 
     function renderUI() {
-        // Dropdowns
-        let sOpt = '<option value="">-- निवडा --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+        // Site & Labour Dropdowns
+        let sOpt = '<option value="">-- Select --</option>' + appData.sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
         document.getElementById('attSite').innerHTML = sOpt;
         document.getElementById('reportSite').innerHTML = sOpt;
-        let lOpt = '<option value="">-- निवडा --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
+        let lOpt = '<option value="">-- Select --</option>' + appData.labours.map(l=>`<option value="${l.id}">${l.name}</option>`).join("");
         document.getElementById('attLabour').innerHTML = lOpt;
 
-        // Stats & Table
+        // Dashboard
         let ownerDue = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + a.ownerRate, 0);
         let profit = appData.attendance.filter(a => !a.paid).reduce((s, a) => s + (a.ownerRate - a.labourRate), 0);
         document.getElementById('ownerTotal').innerText = "₹" + ownerDue;
         document.getElementById('myProfit').innerText = "₹" + profit;
 
+        // Labour Dues Table
         let html = "";
         appData.labours.forEach(l => {
             let wage = appData.attendance.filter(a => a.labourId == l.id && !a.paid).reduce((s, a) => s + a.labourRate, 0);
-            if(wage > 0) html += `<tr><td>${l.name}</td><td>₹${wage}</td><td><button onclick="payLabour(${l.id})" style="padding:5px; background:var(--success); color:white; border-radius:5px;">Paid</button></td></tr>`;
+            if(wage > 0) html += `<tr><td>${l.name}</td><td>₹${wage}</td><td><button class="btn-edit" onclick="payLabour(${l.id})">Paid</button></td></tr>`;
         });
         document.getElementById('labourBody').innerHTML = html;
+
+        // Recent Entries Table
+        let entriesHtml = "";
+        appData.attendance.slice().reverse().slice(0, 10).forEach(a => {
+            let l = appData.labours.find(lab => lab.id == a.labourId);
+            entriesHtml += `<tr>
+                <td>${a.date}</td>
+                <td>${l ? l.name : 'Unknown'}</td>
+                <td>₹${a.ownerRate}</td>
+                <td>
+                    <button class="btn-edit" onclick="editEntry(${a.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-delete" onclick="deleteEntry(${a.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('entriesBody').innerHTML = entriesHtml;
     }
 
     function payLabour(lid) {
-        appData.attendance.forEach(a => { if(a.labourId == lid) a.paid = true; });
-        syncToCloud();
+        if(confirm("Clear all dues for this labour?")) {
+            appData.attendance.forEach(a => { if(a.labourId == lid) a.paid = true; });
+            syncToCloud();
+        }
     }
 
-    // Page Load
-    setTimeout(loadCloudData, 2000); // Firebase लोड होण्यासाठी थोडा वेळ
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let sid = document.getElementById('reportSite').value;
+        let site = appData.sites.find(s => s.id == sid);
+        if(!site) return alert("Select Site");
+
+        doc.setFontSize(18);
+        doc.text("Bill Summary: " + site.name, 15, 20);
+        
+        doc.setFontSize(10);
+        let y = 35;
+        doc.text("Date", 15, y);
+        doc.text("Labour Name", 50, y);
+        doc.text("Owner Rate", 120, y);
+        doc.line(15, y+2, 195, y+2);
+        y += 10;
+
+        let total = 0;
+        appData.attendance.filter(a => a.siteId == sid).forEach(a => {
+            let l = appData.labours.find(lab => lab.id == a.labourId);
+            doc.text(a.date, 15, y);
+            doc.text(l ? l.name : 'N/A', 50, y);
+            doc.text("Rs. " + a.ownerRate, 120, y);
+            total += a.ownerRate;
+            y += 8;
+        });
+
+        doc.setFontSize(14);
+        doc.text("Grand Total Receivable: Rs. " + total, 15, y + 10);
+        doc.save(site.name + "_Bill.pdf");
+    }
+
+    document.getElementById('attDate').valueAsDate = new Date();
+    setTimeout(loadCloudData, 1500);
 </script>
 
 </body>
